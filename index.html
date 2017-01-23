@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>//\\//\\//\\//\\//</title>
+</head>
+<body style="margin:0; overflow: hidden; background-color: black">
+
+  <div class="over-screen" style="position: absolute; top: 0; width: 100%; height: 100%; background-color: black">
+    <div style="color:rgb(0, 204, 204); width: 50%; margin: 20% auto 0px auto;">
+      At last, it is done.
+    </div>
+  </div>
+
+  <div class="game-screen" style="background-color: rgba(255,153,153,1); position: absolute;bottom: 0;width: 100%;height: auto;">
+    <canvas id="input" style="display: block; margin: auto;"></canvas>
+  </div>
+
+  <div id="glContainer"></div>
+
+  <div class="start-screen" style="position: absolute; top: 0; width: 100%; height: 100%; background-color: black">
+    <div style="color:rgb(0, 204, 204); width: 50%; margin: 20% auto 0px auto;">
+      <p>
+      We are Chalchiuhtlicue, suckler of the prickly heart, keeper of the roiling deep, warden for mothers all, and bane of the fourth world. With a fickle flip of the hand we summon forth an apocalyptic downpour, and a sweep of our flowing skirt sends jade cliffs to collapse upon the unsuspecting earth.
+      </p>
+      <p>
+      Two days ago, a five-year-old child threw a small orange beach ball into the Gulf of Mexico, and we will not stand for it.
+      </p>
+      <p>
+      Things have been hectic over in Childbirth for a while now, and these past couple of days the Department of Snowfall and Runoff has been eating up the rest of our time. The emails have been piling up in drifts, but we finally have a minute to spare, and this beach ball is way out of line.
+      </p>
+      <p>
+      We WILL drag it down.
+      </p>
+    </div>
+  </div>
+
+  <script src="js/hud.js"></script>
+  <script src="js/three.js"></script>
+  <script src="js/keyInfo.js"></script>
+  <script src="js/keybrane.js"></script>
+  <script src="js/controls/OrbitControls.js"></script>
+  <script src="js/GPUComputationRenderer.js"></script>
+  <!-- This is the 'compute shader' for the water heightmap: -->
+  <script id="heightmapFragmentShader" type="x-shader/x-fragment">
+
+    #include <common>
+
+    uniform sampler2D keyInputs;
+
+    #define deltaTime (1.0 / 60.0)
+    // #define GRAVITY_CONSTANT (1.)
+    #define GRAVITY_CONSTANT (0.999)
+    #define COHESION_CONSTANT (resolution.x * deltaTime * 3.0)
+    // #define COHESION_CONSTANT (10.)
+    #define VISCOSITY_CONSTANT (0.06)
+
+    void main() {
+
+      vec2 cellSize = 1.0 / resolution.xy;
+
+      vec2 uv = gl_FragCoord.xy * cellSize;
+
+      // heightmapValue.x == height
+      // heightmapValue.y == velocity
+      // heightmapValue.z, heightmapValue.w not used
+      vec4 heightmapValue = texture2D(heightmap, uv);
+
+      // Get neighbours
+      vec4 north = texture2D(heightmap, uv + vec2(0.0, cellSize.y));
+      vec4 south = texture2D(heightmap, uv + vec2(0.0, -cellSize.y));
+      vec4 east = texture2D(heightmap, uv + vec2(cellSize.x, 0.0));
+      vec4 west = texture2D(heightmap, uv + vec2(-cellSize.x, 0.0));
+
+      float sump = north.x + south.x + east.x + west.x - 4.0 * heightmapValue.x;
+
+      float accel = sump * COHESION_CONSTANT;
+
+      // Dynamics
+      heightmapValue.y += accel;
+      heightmapValue.x += heightmapValue.y * deltaTime;
+
+      // Viscosity
+      heightmapValue.x += sump * VISCOSITY_CONSTANT;
+
+      // Keyboard controls
+      float keyPhase = clamp(texture2D(keyInputs, uv).x * PI, 0.0, PI);
+      heightmapValue.x += cos(keyPhase) + 1.0;
+
+      // Decay over time
+      heightmapValue.x *= GRAVITY_CONSTANT;
+
+      gl_FragColor = heightmapValue;
+    }
+
+  </script>
+  <script id="waterVertexShader" type="x-shader/x-vertex">
+
+    uniform sampler2D heightmap;
+
+    varying float vHeight;
+    varying vec3 vNormal;
+
+    void main() {
+
+      vec2 cellSize = vec2(1.0 / WIDTH, 1.0 / WIDTH);
+
+      vec3 objectNormal = vec3(
+        (texture2D(heightmap, uv + vec2(-cellSize.x, 0)).x - texture2D(heightmap, uv + vec2(cellSize.x, 0)).x) * WIDTH / BOUNDS,
+        (texture2D(heightmap, uv + vec2(0, -cellSize.y)).x - texture2D(heightmap, uv + vec2(0, cellSize.y)).x) * WIDTH / BOUNDS,
+        1.0);
+      vHeight = texture2D(heightmap, uv).x;
+      vNormal = objectNormal;
+
+      vec3 transformed = vec3(position.x, position.y, vHeight);
+      #include <project_vertex>
+    }
+
+  </script>
+  <script id="waterFragmentShader" type="x-shader/x-fragment">
+
+    varying float vHeight;
+    varying vec3 vNormal;
+
+    void main() {
+      float h = max(vHeight / 100.0, 0.1);
+      float g= (vNormal.x * vNormal.x + vNormal.y * vNormal.y);
+      gl_FragColor = vec4(0., h - 0.01 * g, h - 0.01 * g, 1.0);
+      // gl_FragColor = vec4(0., h, h, 1.0);
+    }
+
+  </script>
+  <script id="boatVertexShader" type="x-shader/x-fragment">
+
+    uniform sampler2D heightmap;
+
+    void main() {
+      float vertHeight = position.y + BOAT_HALF_HEIGHT;
+      float waveHeight = texture2D(heightmap, vec2(0.5, 0.5)).x;
+      float height = vertHeight + BUOYANCY_CONSTANT * waveHeight;
+      vec3 transformed = vec3(position.x,  height, position.z);
+      #include <project_vertex>
+    }
+
+  </script>
+  <script id="boatFragmentShader" type="x-shader/x-fragment">
+
+    void main() {
+      gl_FragColor = vec4(1.0, 0.6, 0.6, 1.0);
+    }
+
+  </script>
+  <script id="gameVertexShader" type="x-shader/x-fragment">
+
+    uniform sampler2D heightmap;
+
+    varying float relHeight;
+
+    void main() {
+      float waveHeight = texture2D(heightmap, vec2(0.5, 0.5)).x;
+      relHeight = (waveHeight * (1. - BUOYANCY_CONSTANT)) / BOAT_HEIGHT;
+      gl_Position = vec4(position, 1.);
+    }
+
+  </script>
+  <script id="gameFragmentShader" type="x-shader/x-fragment">
+
+    varying float relHeight;
+
+    void main() {
+      gl_FragColor = vec4(relHeight, 0., 0., 1.0);
+    }
+
+  </script>
+  <script src="js/water.js"></script>
+</body>
+</html>
