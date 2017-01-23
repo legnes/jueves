@@ -2,7 +2,7 @@
 juede jueves made for global game jam 2017
 
 use the keyboard to control the water.
-one goal could be to submerge the ball.
+you _can_ submerge the ball.
 if the ball is submerged for long enough, it will start to sink, and the game will end.
 
 works best with mbp keyboards (sorry).
