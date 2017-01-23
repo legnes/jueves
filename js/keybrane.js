@@ -44,12 +44,12 @@ function initInput() {
   }
 
   document.addEventListener('keydown', function(evt) {
-    // evt.preventDefault();
+    evt.preventDefault();
     toggleKey(KEYS[evt.code], 1);
   });
 
   document.addEventListener('keyup', function(evt) {
-    // evt.preventDefault();
+    evt.preventDefault();
     if (evt.code === 'Escape') return run = false;
     toggleKey(KEYS[evt.code], 0);
   });
@@ -66,7 +66,6 @@ function animate(ts) {
   if (run) window.requestAnimationFrame(animate);
 }
 
-// var run = false;
 var run = true;
 initMap();
 initCanvas();
