@@ -51,6 +51,7 @@ function init() {
   container.appendChild(renderer.domElement);
 
   controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableKeys = false;
 
   // document.addEventListener('keydown', function(event) {
   //   // W Pressed: Toggle wireframe
