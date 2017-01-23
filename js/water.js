@@ -14,7 +14,7 @@ const RINGS = 16;
 const BUOYANCY_CONSTANT = 0.7;
 const LIFE_HEIGHT = 2 * RADIUS;
 const HULL_HEIGHT = 0.95 * 255;
-const LEAKINESS = 0.1;
+const LEAKINESS = 0.05;
 
 var container;
 var camera, scene, renderer, controls;
@@ -182,7 +182,8 @@ function onWindowResize() {
 
 function updateGame() {
   var relHeight = gameBuffer[0];
-  if (relHeight > HULL_HEIGHT) {
+  var sunkenness = 255 * (1 - (gameLife / LIFE_HEIGHT));
+  if (relHeight > (HULL_HEIGHT - sunkenness)) {
     gameLife -= LEAKINESS;
     boatGeometry.translate(0, -LEAKINESS, 0);
     boatGeometry.needsUpdate = true;
