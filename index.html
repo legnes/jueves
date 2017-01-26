@@ -6,7 +6,7 @@
 <body style="margin:0; overflow: hidden; background-color: black">
 
   <div class="over-screen" style="position: absolute; top: 0; width: 100%; height: 100%; background-color: black">
-    <div style="color:rgb(0, 204, 204); width: 50%; margin: 20% auto 0px auto;">
+    <div style="color:rgb(0, 222, 140); width: 50%; margin: 20% auto 0px auto;">
       At last, it is done.
     </div>
   </div>
@@ -18,7 +18,7 @@
   <div id="glContainer"></div>
 
   <div class="start-screen" style="position: absolute; top: 0; width: 100%; height: 100%; background-color: black">
-    <div style="color:rgb(0, 204, 204); width: 50%; margin: 20% auto 0px auto;">
+    <div style="color:rgb(0, 222, 140); width: 50%; margin: 20% auto 0px auto;">
       <p>
       We are Chalchiuhtlicue, suckler of the prickly heart, keeper of the roiling deep, warden for mothers all, and bane of the fourth world. With a fickle flip of the hand we summon forth an apocalyptic downpour, and a sweep of our flowing skirt sends jade cliffs to collapse upon the unsuspecting earth.
       </p>
@@ -122,9 +122,10 @@
     varying vec3 vNormal;
 
     void main() {
-      float h = max(vHeight / 100.0, 0.1);
-      float g= (vNormal.x * vNormal.x + vNormal.y * vNormal.y);
-      gl_FragColor = vec4(0., h - 0.01 * g, h - 0.01 * g, 1.0);
+      float h = max(vHeight / 100.0, 0.08);
+      float g = (vNormal.x * vNormal.x + vNormal.y * vNormal.y);
+      float c = h - 0.01 * g;
+      gl_FragColor = vec4(0., c, 2.0 * c / 3.0, 1.0);
       // gl_FragColor = vec4(0., h, h, 1.0);
     }
 
